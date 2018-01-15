@@ -7,10 +7,10 @@
 #
 #-------------------------------------------------------------------------------
 from __future__ import division
-from Tkinter import *
-import tkMessageBox
+from tkinter import *
+import tkinter.messagebox
 from PIL import Image, ImageTk
-import ttk
+import tkinter.ttk as ttk
 import os
 import glob
 import random
@@ -22,6 +22,8 @@ SIZE = 256, 256
 
 class LabelTool():
     def __init__(self, master):
+        self.fileFormat = ['*.JPG','*.jpg','*.png','*.PNG']
+
         # set up the main frame
         self.parent = master
         self.parent.title("LabelTool")
@@ -37,7 +39,7 @@ class LabelTool():
         self.outDir = ''
         self.cur = 0
         self.total = 0
-        self.category = 0
+        self.category = ''
         self.imagename = ''
         self.labelfilename = ''
         self.tkimg = None
@@ -144,20 +146,24 @@ class LabelTool():
         if not dbg:
             s = self.entry.get()
             self.parent.focus()
-            self.category = int(s)
+            # self.category = int(s)
+            self.category = s
         else:
             s = r'D:\workspace\python\labelGUI'
 ##        if not os.path.isdir(s):
 ##            tkMessageBox.showerror("Error!", message = "The specified dir doesn't exist!")
 ##            return
         # get image list
-        self.imageDir = os.path.join(r'./Images', '%03d' %(self.category))
+        # self.imageDir = os.path.join(r'./Images', '%03d' %(self.category))
+        self.imageDir = os.path.join(r'./Images', s)
         #print self.imageDir 
         #print self.category
-        self.imageList = glob.glob(os.path.join(self.imageDir, '*.JPG'))
+        for f in self.fileFormat:
+            self.imageList.extend(glob.glob(os.path.join(self.imageDir, f)))
+        # self.imageList = glob.glob(os.path.join(self.imageDir, '*.JPG'))
         #print self.imageList
         if len(self.imageList) == 0:
-            print 'No .JPG images found in the specified dir!'
+            print('No .JPG images found in the specified dir!')
             return
 
         # default to the 1st image in the collection
@@ -165,17 +171,21 @@ class LabelTool():
         self.total = len(self.imageList)
 
          # set up output dir
-        self.outDir = os.path.join(r'./Labels', '%03d' %(self.category))
+        # self.outDir = os.path.join(r'./Labels', '%03d' %(self.category))
+        self.outDir = os.path.join(r'./Labels',(self.category))
         if not os.path.exists(self.outDir):
             os.mkdir(self.outDir)
 
         # load example bboxes
         #self.egDir = os.path.join(r'./Examples', '%03d' %(self.category))
         self.egDir = os.path.join(r'./Examples/demo')
-        print os.path.exists(self.egDir)
+        print(os.path.exists(self.egDir))
         if not os.path.exists(self.egDir):
             return
-        filelist = glob.glob(os.path.join(self.egDir, '*.JPG'))
+        filelist = []
+        for f in self.fileFormat:
+            filelist.extend(glob.glob(os.path.join(self.imageDir, f)))
+        # filelist = glob.glob(os.path.join(self.egDir,  '*.JPG'))
         self.tmp = []
         self.egList = []
         random.shuffle(filelist)
@@ -190,12 +200,13 @@ class LabelTool():
             self.egLabels[i].config(image = self.egList[-1], width = SIZE[0], height = SIZE[1])
 
         self.loadImage()
-        print '%d images loaded from %s' %(self.total, s)
+        print('%d images loaded from %s' %(self.total, s))
 
     def loadImage(self):
         # load image
         imagepath = self.imageList[self.cur - 1]
         self.img = Image.open(imagepath)
+        self.img_w, self.img_h = self.img.size
         self.tkimg = ImageTk.PhotoImage(self.img)
         self.mainPanel.config(width = max(self.tkimg.width(), 400), height = max(self.tkimg.height(), 400))
         self.mainPanel.create_image(0, 0, image = self.tkimg, anchor=NW)
@@ -232,7 +243,7 @@ class LabelTool():
             f.write('%d\n' %len(self.bboxList))
             for bbox in self.bboxList:
                 f.write(' '.join(map(str, bbox)) + '\n')
-        print 'Image No. %d saved' %(self.cur)
+        print('Image No. %d saved' %(self.cur))
 
 
     def mouseClick(self, event):
@@ -241,7 +252,7 @@ class LabelTool():
         else:
             x1, x2 = min(self.STATE['x'], event.x), max(self.STATE['x'], event.x)
             y1, y2 = min(self.STATE['y'], event.y), max(self.STATE['y'], event.y)
-            self.bboxList.append((x1, y1, x2, y2, self.currentLabelclass))
+            self.bboxList.append((x1, y1, x2, y2, self.currentLabelclass, self.img_w, self.img_h))
             self.bboxIdList.append(self.bboxId)
             self.bboxId = None
             self.listbox.insert(END, '%s : (%d, %d) -> (%d, %d)' %(self.currentLabelclass,x1, y1, x2, y2))
@@ -310,7 +321,7 @@ class LabelTool():
 
     def setClass(self):
     	self.currentLabelclass = self.classcandidate.get()
-    	print 'set label class to :',self.currentLabelclass
+    	print('set label class to :',self.currentLabelclass)
 
 ##    def setImage(self, imagepath = r'test2.png'):
 ##        self.img = Image.open(imagepath)
