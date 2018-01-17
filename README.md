@@ -8,6 +8,8 @@
 ## New Usage
 ### For multi-class task, modify 'class.txt' with your own class-candidates and before labeling bbox, choose the 'Current Class' in the Combobox and make sure you click 'ComfirmClass' button.
 
+1. Add python 3.6 support for multi-class task
+
 ### The remaining usage is the same as the origin one.
 
 ------------------------------------
